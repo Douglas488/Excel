@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel数据处理工具 - Web版</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .card-body {
+            padding: 40px;
+        }
+
+        .step {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.1);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 20px;
+            border: 3px dashed #4facfe;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .file-upload-label:hover {
+            background: #e8f4ff;
+            border-color: #00f2fe;
+        }
+
+        .file-upload-label i {
+            font-size: 2rem;
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            border: 2px solid #e8f4ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .config-section {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e8f4ff;
+        }
+
+        .config-section h4 {
+            color: #4facfe;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .config-section h4 i {
+            margin-right: 10px;
+        }
+
+        .download-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .download-section h3 {
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            background: white;
+            color: #56ab2f;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-file-excel"></i> Excel数据处理工具</h1>
+            <p>智能SKU查找与成本获取 - Web版</p>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h2><i class="fas fa-upload"></i> 文件上传与配置</h2>
+            </div>
+            <div class="card-body">
+                <!-- 步骤1: 文件上传 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-title">上传Excel文件</div>
+                        <button id="healthCheckBtn" class="btn" style="margin-left: auto; padding: 8px 15px; font-size: 12px; background: #28a745; color: white;">
+                            <i class="fas fa-heartbeat"></i> 检查API状态
+                        </button>
+                    </div>
+                    <div class="file-upload">
+                        <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                        <label for="excelFile" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <div>点击选择Excel文件或拖拽到此处</div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                支持 .xlsx 和 .xls 格式，最大50MB
+                            </div>
+                        </label>
+                    </div>
+                    <div id="fileInfo" style="margin-top: 15px; display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="fileName"></span> 已选择
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 配置设置 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-title">配置数据源</div>
+                    </div>
+                    <div class="config-grid">
+                        <!-- SKU数据源配置 -->
+                        <div class="config-section">
+                            <h4><i class="fas fa-search"></i> SKU数据源</h4>
+                            <div class="form-group">
+                                <label>工作表</label>
+                                <select id="skuSheet" class="form-control">
+                                    <option value="">请先上传文件</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>标题列</label>
+                                <select id="skuTitleCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>SKU列</label>
+                                <select id="skuCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 成本数据源配置 -->
+                        <div class="config-section">
+                            <h4><i class="fas fa-dollar-sign"></i> 成本数据源</h4>
+                            <div class="form-group">
+                                <label>工作表</label>
+                                <select id="costSheet" class="form-control">
+                                    <option value="">请先上传文件</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>SKU列</label>
+                                <select id="costSkuCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>成本列</label>
+                                <select id="costCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 输出配置 -->
+                        <div class="config-section">
+                            <h4><i class="fas fa-download"></i> 输出设置</h4>
+                            <div class="form-group">
+                                <label>输出工作表</label>
+                                <select id="outputSheet" class="form-control">
+                                    <option value="">请先上传文件</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>标题列</label>
+                                <select id="outputTitleCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>SKU列</label>
+                                <select id="outputSkuCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>成本列</label>
+                                <select id="outputCostCol" class="form-control">
+                                    <option value="">请先选择工作表</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>起始行</label>
+                                <input type="number" id="startRow" class="form-control" value="2" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>结束行</label>
+                                <input type="number" id="endRow" class="form-control" value="5000" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 处理数据 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div class="step-title">开始处理</div>
+                    </div>
+                    <button id="processBtn" class="btn btn-primary" style="width: 100%; padding: 15px;">
+                        <i class="fas fa-play"></i> 开始处理数据
+                    </button>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <div>正在处理数据，请稍候...</div>
+                    </div>
+
+                    <div class="progress" id="progress" style="display: none;">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果显示 -->
+        <div id="resultSection" style="display: none;">
+            <div class="main-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-check-circle"></i> 处理结果</h2>
+                </div>
+                <div class="card-body">
+                    <div class="result-stats" id="resultStats">
+                        <!-- 统计信息将通过JavaScript动态填充 -->
+                    </div>
+                    
+                    <div class="download-section" id="downloadSection">
+                        <h3><i class="fas fa-download"></i> 下载处理结果</h3>
+                        <p>数据处理完成，点击下方按钮下载结果文件</p>
+                        <a href="#" id="downloadBtn" class="download-btn">
+                            <i class="fas fa-file-excel"></i> 下载Excel文件
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="errorAlert" class="alert alert-error" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://excel-processor-api.onrender.com';
+        let uploadedFile = null;
+        let sheetsInfo = null;
+
+        // 文件上传处理
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileInfo').style.display = 'block';
+                uploadFile(file);
+            }
+        });
+
+        // 上传文件到服务器
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showLoading(true);
+                console.log('正在上传文件到:', `${API_BASE_URL}/api/upload`);
+                
+                const response = await fetch(`${API_BASE_URL}/api/upload`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'
+                });
+
+                console.log('响应状态:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('上传结果:', result);
+                
+                sheetsInfo = result.sheets_info;
+                updateSheetOptions(result.sheets);
+                showAlert('文件上传成功！', 'success');
+            } catch (error) {
+                console.error('上传错误:', error);
+                showAlert(`上传失败: ${error.message}。请检查网络连接和API服务状态。`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 更新工作表选项
+        function updateSheetOptions(sheets) {
+            const selects = ['skuSheet', 'costSheet', 'outputSheet'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">请选择工作表</option>';
+                sheets.forEach(sheet => {
+                    const option = document.createElement('option');
+                    option.value = sheet;
+                    option.textContent = sheet;
+                    select.appendChild(option);
+                });
+            });
+
+            // 设置默认值
+            if (sheets.includes('Sheet1')) document.getElementById('skuSheet').value = 'Sheet1';
+            if (sheets.includes('Sheet2')) document.getElementById('costSheet').value = 'Sheet2';
+            if (sheets.includes('Order details')) document.getElementById('outputSheet').value = 'Order details';
+        }
+
+        // 处理数据
+        document.getElementById('processBtn').addEventListener('click', async function() {
+            if (!uploadedFile) {
+                showAlert('请先上传Excel文件', 'error');
+                return;
+            }
+
+            const config = getConfig();
+            if (!validateConfig(config)) {
+                return;
+            }
+
+            try {
+                showLoading(true);
+                document.getElementById('progress').style.display = 'block';
+                
+                // 将文件转换为Base64
+                const fileContent = await fileToBase64(uploadedFile);
+                
+                const requestData = {
+                    file: { content: fileContent },
+                    sku_config: {
+                        sheet: config.skuSheet,
+                        title_col: config.skuTitleCol,
+                        sku_col: config.skuCol
+                    },
+                    cost_config: {
+                        sheet: config.costSheet,
+                        sku_col: config.costSkuCol,
+                        cost_col: config.costCol
+                    },
+                    output_config: {
+                        sheet: config.outputSheet,
+                        title_col: config.outputTitleCol,
+                        sku_col: config.outputSkuCol,
+                        cost_col: config.outputCostCol,
+                        start_row: parseInt(config.startRow),
+                        end_row: parseInt(config.endRow)
+                    }
+                };
+
+                console.log('正在处理数据到:', `${API_BASE_URL}/api/process`);
+                
+                const response = await fetch(`${API_BASE_URL}/api/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData),
+                    mode: 'cors'
+                });
+
+                console.log('处理响应状态:', response.status);
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(result);
+                    showAlert('数据处理完成！', 'success');
+                } else {
+                    showAlert(`处理失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`处理失败: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+                document.getElementById('progress').style.display = 'none';
+            }
+        });
+
+        // 获取配置
+        function getConfig() {
+            return {
+                skuSheet: document.getElementById('skuSheet').value,
+                skuTitleCol: document.getElementById('skuTitleCol').value,
+                skuCol: document.getElementById('skuCol').value,
+                costSheet: document.getElementById('costSheet').value,
+                costSkuCol: document.getElementById('costSkuCol').value,
+                costCol: document.getElementById('costCol').value,
+                outputSheet: document.getElementById('outputSheet').value,
+                outputTitleCol: document.getElementById('outputTitleCol').value,
+                outputSkuCol: document.getElementById('outputSkuCol').value,
+                outputCostCol: document.getElementById('outputCostCol').value,
+                startRow: document.getElementById('startRow').value,
+                endRow: document.getElementById('endRow').value
+            };
+        }
+
+        // 验证配置
+        function validateConfig(config) {
+            const required = ['skuSheet', 'skuTitleCol', 'skuCol', 'costSheet', 'costSkuCol', 'costCol', 'outputSheet', 'outputTitleCol', 'outputSkuCol', 'outputCostCol'];
+            
+            for (let field of required) {
+                if (!config[field]) {
+                    showAlert(`请配置${getFieldName(field)}`, 'error');
+                    return false;
+            }
+        }
+            return true;
+        }
+
+        // 获取字段中文名
+        function getFieldName(field) {
+            const names = {
+                skuSheet: 'SKU数据源工作表',
+                skuTitleCol: 'SKU数据源标题列',
+                skuCol: 'SKU数据源SKU列',
+                costSheet: '成本数据源工作表',
+                costSkuCol: '成本数据源SKU列',
+                costCol: '成本数据源成本列',
+                outputSheet: '输出工作表',
+                outputTitleCol: '输出标题列',
+                outputSkuCol: '输出SKU列',
+                outputCostCol: '输出成本列'
+            };
+            return names[field] || field;
+        }
+
+        // 显示结果
+        function showResult(result) {
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // 更新统计信息
+            const statsHtml = `
+                <div class="stat-item">
+                    <div class="stat-number">${result.processed_rows}</div>
+                    <div class="stat-label">处理行数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${result.found_sku}</div>
+                    <div class="stat-label">找到SKU</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${result.found_cost}</div>
+                    <div class="stat-label">找到成本</div>
+                </div>
+            `;
+            document.getElementById('resultStats').innerHTML = statsHtml;
+            
+            // 设置下载链接
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.output_file.content}`;
+            downloadBtn.download = result.output_file.filename;
+        }
+
+        // 文件转Base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // 显示加载状态
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('processBtn').disabled = show;
+        }
+
+        // 显示提示信息
+        function showAlert(message, type) {
+            const alert = document.getElementById('errorAlert');
+            const messageSpan = document.getElementById('errorMessage');
+            
+            alert.className = `alert alert-${type}`;
+            messageSpan.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // 健康检查
+        document.getElementById('healthCheckBtn').addEventListener('click', async function() {
+            try {
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检查中...';
+                
+                const response = await fetch(`${API_BASE_URL}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showAlert(`API服务正常！状态: ${result.status}`, 'success');
+                } else {
+                    showAlert(`API服务异常！状态码: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`无法连接到API服务: ${error.message}`, 'error');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-heartbeat"></i> 检查API状态';
+            }
+        });
+
+        // 初始化列选项更新
+        ['skuSheet', 'costSheet', 'outputSheet'].forEach(sheetId => {
+            document.getElementById(sheetId).addEventListener('change', function() {
+                updateColumnOptions(this.id, this.value);
+            });
+        });
+
+        // 更新列选项
+        function updateColumnOptions(sheetSelectId, sheetName) {
+            if (!sheetName || !sheetsInfo) return;
+            
+            const sheetInfo = sheetsInfo[sheetName];
+            if (!sheetInfo) return;
+            
+            const columnMappings = {
+                skuSheet: ['skuTitleCol', 'skuCol'],
+                costSheet: ['costSkuCol', 'costCol'],
+                outputSheet: ['outputTitleCol', 'outputSkuCol', 'outputCostCol']
+            };
+            
+            const columns = sheetInfo.columns;
+            const targetSelects = columnMappings[sheetSelectId] || [];
+            
+            targetSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">请选择列</option>';
+                columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    select.appendChild(option);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
