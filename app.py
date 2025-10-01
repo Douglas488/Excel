@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, send_file, make_response
-from flask_cors import CORS
 import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
@@ -14,8 +13,13 @@ import json
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
-# 启用CORS支持
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
+# 尝试导入flask-cors，如果失败则使用手动CORS处理
+try:
+    from flask_cors import CORS
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
+    print("✅ 使用 flask-cors 处理 CORS")
+except ImportError:
+    print("⚠️ flask-cors 未安装，使用手动 CORS 处理")
 
 # 兜底：为所有响应追加CORS头，并正确处理预检请求
 @app.after_request
