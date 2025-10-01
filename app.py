@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
@@ -12,6 +13,9 @@ import json
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
+
+# 启用CORS支持
+CORS(app, origins=['*'])
 
 # 允许的文件扩展名
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
