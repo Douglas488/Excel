@@ -13,34 +13,29 @@ import json
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
-# 尝试导入flask-cors，如果失败则使用手动CORS处理
-try:
-    from flask_cors import CORS
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
-    print("✅ 使用 flask-cors 处理 CORS")
-except ImportError:
-    print("⚠️ flask-cors 未安装，使用手动 CORS 处理")
-
-# 兜底：为所有响应追加CORS头，并正确处理预检请求
+# 强制手动CORS处理，确保兼容性
 @app.after_request
 def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*') or '*'
-    response.headers['Vary'] = 'Origin'
+    # 允许所有来源
+    origin = request.headers.get('Origin', '*')
+    response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
     response.headers['Access-Control-Allow-Credentials'] = 'false'
-    response.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', 'Content-Type, Authorization')
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers['Access-Control-Max-Age'] = '86400'
     return response
 
-@app.route('/<path:unused>', methods=['OPTIONS'])
-@app.route('/', methods=['OPTIONS'])
-def cors_preflight(unused=None):
-    resp = make_response('', 204)
-    resp.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*') or '*'
-    resp.headers['Vary'] = 'Origin'
-    resp.headers['Access-Control-Allow-Credentials'] = 'false'
-    resp.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', 'Content-Type, Authorization')
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
-    return resp
+# 处理所有OPTIONS预检请求
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+        response.headers['Access-Control-Allow-Credentials'] = 'false'
+        response.headers['Access-Control-Max-Age'] = '86400'
+        return response
 
 # 允许的文件扩展名
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
