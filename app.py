@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 import tempfile
 import io
+import base64
 from werkzeug.utils import secure_filename
 import json
 
@@ -16,11 +17,10 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 # 强制手动CORS处理，确保兼容性
 @app.after_request
 def add_cors_headers(response):
-    # 允许所有来源
-    origin = request.headers.get('Origin', '*')
-    response.headers['Access-Control-Allow-Origin'] = origin
+    # 允许所有来源 - 使用通配符确保兼容性
+    response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
     response.headers['Access-Control-Allow-Credentials'] = 'false'
     response.headers['Access-Control-Max-Age'] = '86400'
     return response
@@ -30,9 +30,9 @@ def add_cors_headers(response):
 def handle_preflight():
     if request.method == "OPTIONS":
         response = make_response()
-        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
         response.headers['Access-Control-Allow-Credentials'] = 'false'
         response.headers['Access-Control-Max-Age'] = '86400'
         return response
@@ -110,6 +110,7 @@ def index():
         "endpoints": {
             "POST /api/upload": "上传Excel文件",
             "POST /api/process": "处理Excel数据",
+            "POST /api/check-consistency": "检查数据一致性",
             "GET /api/health": "健康检查"
         }
     })
@@ -118,6 +119,96 @@ def index():
 def health():
     """健康检查"""
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+
+@app.route('/api/check-consistency', methods=['POST'])
+def check_consistency():
+    """检查数据一致性"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'file' not in data:
+            return jsonify({"error": "缺少文件数据"}), 400
+            
+        # 解码文件内容
+        file_content = base64.b64decode(data['file']['content'])
+        
+        # 创建临时文件
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+            temp_file.write(file_content)
+            temp_file_path = temp_file.name
+        
+        try:
+            # 加载工作簿
+            workbook = load_workbook(temp_file_path)
+            
+            # 获取配置
+            sku_config = data.get('sku_config', {})
+            cost_config = data.get('cost_config', {})
+            
+            if not sku_config or not cost_config:
+                return jsonify({"error": "缺少数据源配置"}), 400
+            
+            # 读取SKU数据
+            sku_sheet_name = sku_config.get('sheet', 'Sheet1')
+            if sku_sheet_name not in workbook.sheetnames:
+                return jsonify({"error": f"未找到工作表: {sku_sheet_name}"}), 400
+                
+            sku_sheet = workbook[sku_sheet_name]
+            sku_data = []
+            
+            for row in sku_sheet.iter_rows(min_row=2, values_only=True):
+                if row and len(row) > 0 and row[0]:  # 确保有数据
+                    sku_data.append({
+                        'title': str(row[0]) if len(row) > 0 else '',
+                        'sku': str(row[1]) if len(row) > 1 else ''
+                    })
+            
+            # 读取成本数据
+            cost_sheet_name = cost_config.get('sheet', 'Sheet2')
+            if cost_sheet_name not in workbook.sheetnames:
+                return jsonify({"error": f"未找到工作表: {cost_sheet_name}"}), 400
+                
+            cost_sheet = workbook[cost_sheet_name]
+            cost_data = []
+            
+            for row in cost_sheet.iter_rows(min_row=2, values_only=True):
+                if row and len(row) > 0 and row[0]:  # 确保有数据
+                    cost_data.append({
+                        'sku': str(row[0]) if len(row) > 0 else '',
+                        'cost': row[1] if len(row) > 1 else 0
+                    })
+            
+            # 进行数据匹配分析
+            sku_skus = set(item['sku'] for item in sku_data if item['sku'])
+            cost_skus = set(item['sku'] for item in cost_data if item['sku'])
+            
+            matched_skus = sku_skus.intersection(cost_skus)
+            unmatched_skus = sku_skus - cost_skus
+            unused_cost_skus = cost_skus - sku_skus
+            
+            total_skus = len(sku_skus)
+            matched_count = len(matched_skus)
+            match_rate = f"{(matched_count / total_skus * 100):.1f}%" if total_skus > 0 else "0%"
+            
+            return jsonify({
+                "matched_count": matched_count,
+                "unmatched_count": len(unmatched_skus),
+                "unused_count": len(unused_cost_skus),
+                "total_skus": total_skus,
+                "match_rate": match_rate,
+                "matched_skus": list(matched_skus)[:10],  # 只返回前10个
+                "unmatched_skus": list(unmatched_skus)[:20],  # 只返回前20个
+                "unused_cost_skus": list(unused_cost_skus)[:20],  # 只返回前20个
+                "message": "数据一致性检查完成"
+            })
+            
+        finally:
+            # 清理临时文件
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+                
+    except Exception as e:
+        return jsonify({"error": f"数据一致性检查失败: {str(e)}"}), 500
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -187,15 +278,32 @@ def process_data():
         
         # 从base64解码文件内容
         import base64
-        file_content = base64.b64decode(file_data['content'])
+        try:
+            file_content = base64.b64decode(file_data['content'])
+        except Exception as e:
+            return jsonify({"error": f"Base64解码失败: {str(e)}"}), 400
+        
+        # 验证文件内容
+        if len(file_content) == 0:
+            return jsonify({"error": "文件内容为空"}), 400
+        
+        # 检查文件头是否为Excel格式
+        if not (file_content.startswith(b'PK') or file_content.startswith(b'\xd0\xcf\x11\xe0')):
+            return jsonify({"error": "文件格式不正确，请确保上传的是Excel文件"}), 400
         
         # 创建临时文件
         temp_path = os.path.join(tempfile.gettempdir(), f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
-        with open(temp_path, 'wb') as f:
-            f.write(file_content)
+        try:
+            with open(temp_path, 'wb') as f:
+                f.write(file_content)
+        except Exception as e:
+            return jsonify({"error": f"创建临时文件失败: {str(e)}"}), 500
         
         # 加载工作簿
-        workbook = load_workbook(temp_path)
+        try:
+            workbook = load_workbook(temp_path)
+        except Exception as e:
+            return jsonify({"error": f"无法打开Excel文件: {str(e)}"}), 400
         
         # 获取配置
         sku_config = data['sku_config']

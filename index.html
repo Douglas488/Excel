@@ -200,6 +200,18 @@
             box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
         }
 
+        /* 工具栏按钮配色 */
+        .btn-green { background: #16a085; color: #fff; }
+        .btn-orange { background: #e67e22; color: #fff; }
+        .btn-teal { background: #27ae60; color: #fff; }
+        .btn-red { background: #e74c3c; color: #fff; }
+        .btn-gold { background: #f39c12; color: #fff; }
+        .btn-purple { background: #9b59b6; color: #fff; }
+        .btn-slate { background: #34495e; color: #fff; }
+        .btn-help { background: #e74c3c; color: #fff; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 16px; margin: 10px 0 20px; }
+        .toolbar .btn { padding: 10px 18px; border-radius: 8px; }
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -328,6 +340,15 @@
             margin-right: 10px;
         }
 
+        /* 配置数据源区域紧凑化 */
+        .step-config { padding: 18px; }
+        .step-config .step-header { margin-bottom: 14px; }
+        .step-config .config-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .step-config .config-section { padding: 14px; border-radius: 8px; }
+        .step-config .config-section h4 { margin-bottom: 10px; font-size: 14px; }
+        .step-config .form-group { margin-bottom: 10px; }
+        .step-config .form-control { padding: 8px 10px; font-size: 13px; border-radius: 8px; }
+
         .download-section {
             text-align: center;
             padding: 30px;
@@ -357,6 +378,97 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
+        /* 使用说明弹窗样式 */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            opacity: 0.7;
+        }
+        .modal-body {
+            padding: 0;
+        }
+        .help-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #4facfe;
+            border-bottom: 3px solid #4facfe;
+        }
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+        .help-content {
+            padding: 30px;
+            max-height: 50vh;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        .help-content h3 {
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+        .help-content h4 {
+            color: #6c757d;
+            margin: 20px 0 10px 0;
+        }
+        .help-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .help-content li {
+            margin: 5px 0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -372,6 +484,17 @@
             
             .config-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            .help-tabs {
+                flex-direction: column;
+            }
+            .tab-btn {
+                text-align: left;
             }
         }
     </style>
@@ -416,7 +539,7 @@
                 </div>
 
                 <!-- 步骤2: 配置设置 -->
-                <div class="step">
+                <div class="step step-config">
                     <div class="step-header">
                         <div class="step-number">2</div>
                         <div class="step-title">配置数据源</div>
@@ -513,9 +636,7 @@
                         <div class="step-number">3</div>
                         <div class="step-title">开始处理</div>
                     </div>
-                    <button id="processBtn" class="btn btn-primary" style="width: 100%; padding: 15px;">
-                        <i class="fas fa-play"></i> 开始处理数据
-                    </button>
+                    <!-- 开始处理按钮已移至工具栏 -->
                     
                     <div class="loading" id="loading">
                         <div class="spinner"></div>
@@ -524,6 +645,20 @@
 
                     <div class="progress" id="progress" style="display: none;">
                         <div class="progress-bar" id="progressBar"></div>
+                    </div>
+
+                    <!-- 工具栏按钮置于开始处理下方 -->
+                    <div class="toolbar">
+                        <button id="btnAutoConfig" class="btn btn-green"><i class="fas fa-bullseye"></i> 自动配置</button>
+                        <button id="btnCheckData" class="btn btn-orange"><i class="fas fa-search"></i> 数据检查</button>
+                        <button id="btnLoadData" class="btn btn-teal"><i class="fas fa-download"></i> 加载数据</button>
+                        <button id="btnStartProcess" class="btn btn-red"><i class="fas fa-bolt"></i> 开始处理</button>
+                        <button id="btnSaveResult" class="btn btn-gold"><i class="fas fa-save"></i> 保存结果</button>
+                    </div>
+                    <div class="toolbar">
+                        <button id="btnDebug" class="btn btn-purple"><i class="fas fa-wrench"></i> 调试信息</button>
+                        <button id="btnTestSave" class="btn btn-slate"><i class="fas fa-flask"></i> 测试保存</button>
+                        <button id="btnHelp" class="btn btn-help"><i class="fas fa-book"></i> 使用说明</button>
                     </div>
                 </div>
             </div>
@@ -555,6 +690,26 @@
         <div id="errorAlert" class="alert alert-error" style="display: none;">
             <i class="fas fa-exclamation-triangle"></i>
             <span id="errorMessage"></span>
+        </div>
+
+        <!-- 使用说明弹窗 -->
+        <div id="helpModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📖 Excel数据处理工具使用说明</h2>
+                    <span class="close" onclick="closeHelpModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="help-tabs">
+                        <button class="tab-btn active" onclick="showHelpTab('prep')">📋 资料准备</button>
+                        <button class="tab-btn" onclick="showHelpTab('tutorial')">🎯 操作教程</button>
+                        <button class="tab-btn" onclick="showHelpTab('faq')">❓ 常见问题</button>
+                    </div>
+                    <div id="helpContent" class="help-content">
+                        <!-- 内容将通过JavaScript动态填充 -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -629,8 +784,8 @@
             if (sheets.includes('Order details')) document.getElementById('outputSheet').value = 'Order details';
         }
 
-        // 处理数据
-        document.getElementById('processBtn').addEventListener('click', async function() {
+        // 处理数据函数
+        async function processData() {
             if (!uploadedFile) {
                 showAlert('请先上传Excel文件', 'error');
                 return;
@@ -697,6 +852,143 @@
                 showLoading(false);
                 document.getElementById('progress').style.display = 'none';
             }
+        }
+
+        // 工具栏逻辑
+        document.getElementById('btnAutoConfig').addEventListener('click', function() {
+            // 根据常见命名自动填充
+            if (document.getElementById('skuSheet').querySelector('option[value="Sheet1"]')) {
+                document.getElementById('skuSheet').value = 'Sheet1';
+            }
+            if (document.getElementById('costSheet').querySelector('option[value="Sheet2"]')) {
+                document.getElementById('costSheet').value = 'Sheet2';
+            }
+            if (document.getElementById('outputSheet').querySelector('option[value="Order details"]')) {
+                document.getElementById('outputSheet').value = 'Order details';
+            }
+            // 触发列选项刷新
+            ['skuSheet','costSheet','outputSheet'].forEach(id=>{
+                const el = document.getElementById(id);
+                if (el && el.value) updateColumnOptions(id, el.value);
+            });
+            // 设置默认列
+            document.getElementById('skuTitleCol').value = 'B';
+            document.getElementById('skuCol').value = 'C';
+            document.getElementById('costSkuCol').value = 'A';
+            document.getElementById('costCol').value = 'B';
+            document.getElementById('outputTitleCol').value = 'A';
+            document.getElementById('outputSkuCol').value = 'B';
+            document.getElementById('outputCostCol').value = 'D';
+            showAlert('自动配置完成！', 'success');
+        });
+
+        document.getElementById('btnCheckData').addEventListener('click', async function() {
+            if (!uploadedFile) {
+                showAlert('请先上传Excel文件', 'error');
+                return;
+            }
+
+            const config = getConfig();
+            if (!validateConfig(config)) {
+                return;
+            }
+
+            try {
+                showLoading(true);
+                showAlert('正在检查数据一致性，请稍候...', 'info');
+                
+                // 将文件转换为Base64
+                const fileContent = await fileToBase64(uploadedFile);
+                
+                const requestData = {
+                    file: { content: fileContent },
+                    sku_config: {
+                        sheet: config.skuSheet,
+                        title_col: config.skuTitleCol,
+                        sku_col: config.skuCol
+                    },
+                    cost_config: {
+                        sheet: config.costSheet,
+                        sku_col: config.costSkuCol,
+                        cost_col: config.costCol
+                    }
+                };
+
+                console.log('正在检查数据一致性...');
+                
+                const response = await fetch(`${API_BASE_URL}/api/check-consistency`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData),
+                    mode: 'cors'
+                });
+
+                console.log('数据检查响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showConsistencyReport(result);
+                } else {
+                    const error = await response.json();
+                    showAlert(`数据检查失败: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('数据检查错误:', error);
+                showAlert(`数据检查失败: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        document.getElementById('btnLoadData').addEventListener('click', async function() {
+            // 与后端交互的“加载数据”并非必须步骤，这里仅做可视化提示
+            if (!uploadedFile) { showAlert('请先上传Excel文件', 'error'); return; }
+            showLoading(true);
+            setTimeout(()=>{
+                showLoading(false);
+                showAlert('数据已加载到浏览器内存（文件已读取，配置已就绪）', 'success');
+            }, 600);
+        });
+
+        document.getElementById('btnStartProcess').addEventListener('click', async function(){
+            processData();
+        });
+
+        document.getElementById('btnSaveResult').addEventListener('click', function(){
+            const a = document.getElementById('downloadBtn');
+            if (!a || !a.href || a.href === '#') { showAlert('暂无可保存的结果，请先开始处理。', 'error'); return; }
+            a.click();
+        });
+
+        document.getElementById('btnDebug').addEventListener('click', function(){
+            const cfg = getConfig();
+            const debug = {
+                api: API_BASE_URL,
+                hasFile: !!uploadedFile,
+                sheetsInfo: sheetsInfo ? Object.keys(sheetsInfo) : null,
+                config: cfg
+            };
+            console.log('调试信息', debug);
+            showAlert('已在控制台输出调试信息。', 'info');
+        });
+
+        document.getElementById('btnTestSave').addEventListener('click', function(){
+            const a = document.getElementById('downloadBtn');
+            if (!a || !a.href || a.href === '#') {
+                // 造一个空的Excel占位文件下载
+                const blob = new Blob([new Uint8Array([80,75,3,4])], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                const url = URL.createObjectURL(blob);
+                const tmp = document.createElement('a');
+                tmp.href = url; tmp.download = 'test.xlsx'; tmp.click();
+                URL.revokeObjectURL(url);
+                showAlert('已触发测试保存（占位Excel）。', 'success');
+            } else { a.click(); }
+        });
+
+        document.getElementById('btnHelp').addEventListener('click', function(){
+            showHelpModal();
         });
 
         // 获取配置
@@ -777,17 +1069,42 @@
         // 文件转Base64
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
+                // 验证文件类型
+                if (!file.type.includes('excel') && !file.type.includes('spreadsheet') && 
+                    !file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+                    reject(new Error('请选择Excel文件 (.xlsx 或 .xls)'));
+                    return;
+                }
+                
+                // 验证文件大小 (50MB限制)
+                if (file.size > 50 * 1024 * 1024) {
+                    reject(new Error('文件大小超过50MB限制'));
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
+                reader.onload = () => {
+                    try {
+                        const base64 = reader.result.split(',')[1];
+                        if (!base64) {
+                            reject(new Error('文件读取失败'));
+                            return;
+                        }
+                        console.log(`文件转换成功: ${file.name}, 大小: ${file.size} bytes, Base64长度: ${base64.length}`);
+                        resolve(base64);
+                    } catch (error) {
+                        reject(new Error('Base64转换失败: ' + error.message));
+                    }
+                };
+                reader.onerror = error => reject(new Error('文件读取失败: ' + error.message));
             });
         }
 
         // 显示加载状态
         function showLoading(show) {
             document.getElementById('loading').style.display = show ? 'block' : 'none';
-            document.getElementById('processBtn').disabled = show;
+            document.getElementById('btnStartProcess').disabled = show;
         }
 
         // 显示提示信息
@@ -862,6 +1179,290 @@
                     select.appendChild(option);
                 });
             });
+        }
+
+        // 使用说明弹窗功能
+        function showHelpModal() {
+            document.getElementById('helpModal').style.display = 'block';
+            showHelpTab('prep'); // 默认显示资料准备
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        function showHelpTab(tabName) {
+            // 更新标签页状态
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 显示对应内容
+            const content = document.getElementById('helpContent');
+            let html = '';
+            
+            if (tabName === 'prep') {
+                html = `
+                    <h3>📊 Excel文件结构要求</h3>
+                    <h4>1. 工作表命名建议：</h4>
+                    <ul>
+                        <li><strong>SKU数据源：Sheet1</strong> - 建议从Upseller产品列表导出对应店铺Excel工作表</li>
+                        <li><strong>成本数据源：Sheet2</strong> - 建议从Upseller库存清单导出对应店铺Excel工作表</li>
+                        <li><strong>输出工作表：Order details</strong> - 建议Tk后台导出Excel工作表</li>
+                    </ul>
+                    
+                    <h4>2. SKU数据源结构 (Sheet1)：</h4>
+                    <ul>
+                        <li><strong>A列：</strong>产品ID (可选)</li>
+                        <li><strong>B列：</strong>产品标题 (必填) - 用于搜索SKU</li>
+                        <li><strong>C列：</strong>SKU数据 (必填) - 查找结果</li>
+                        <li><strong>D列：</strong>变种ID (可选)</li>
+                    </ul>
+                    
+                    <h4>3. 成本数据源结构 (Sheet2)：</h4>
+                    <ul>
+                        <li><strong>A列：</strong>SKU标识 (必填) - 用于匹配</li>
+                        <li><strong>B列：</strong>平均成本 (必填) - 查找结果</li>
+                        <li><strong>C列：</strong>标题 (可选)</li>
+                        <li><strong>D列：</strong>仓库 (可选)</li>
+                        <li><strong>E列：</strong>货架位 (可选)</li>
+                    </ul>
+                    
+                    <h4>4. 输出工作表结构 (Order details)：</h4>
+                    <ul>
+                        <li><strong>A列：</strong>Product name (产品标题) - 输入数据</li>
+                        <li><strong>B列：</strong>SKU (输出位置) - 处理结果</li>
+                        <li><strong>C列：</strong>Quantity (数量)</li>
+                        <li><strong>D列：</strong>成本 (输出位置) - 处理结果</li>
+                        <li><strong>E列：</strong>总成本</li>
+                    </ul>
+                    
+                    <h4>📝 数据质量要求：</h4>
+                    <ul>
+                        <li>确保产品标题完整，无空值</li>
+                        <li>SKU格式统一，避免特殊字符</li>
+                        <li>成本数据为数值格式</li>
+                        <li>建议数据量不超过10000行</li>
+                    </ul>
+                `;
+            } else if (tabName === 'tutorial') {
+                html = `
+                    <h3>🚀 详细操作步骤</h3>
+                    <h4>第一步：启动程序</h4>
+                    <ul>
+                        <li>双击运行 excel_processor.py 或启动程序.bat</li>
+                        <li>等待程序加载完成</li>
+                    </ul>
+                    
+                    <h4>第二步：选择Excel文件</h4>
+                    <ul>
+                        <li>点击"📁 浏览文件"按钮</li>
+                        <li>选择包含数据的Excel文件</li>
+                        <li>程序自动加载所有工作表</li>
+                    </ul>
+                    
+                    <h4>第三步：自动配置 (推荐)</h4>
+                    <ul>
+                        <li>点击"🎯 自动配置"按钮</li>
+                        <li>程序自动设置最佳配置</li>
+                        <li>查看配置说明确认无误</li>
+                    </ul>
+                    
+                    <h4>第四步：数据检查 (重要)</h4>
+                    <ul>
+                        <li>点击"🔍 数据检查"按钮</li>
+                        <li>查看匹配率统计</li>
+                        <li>检查不匹配的SKU列表</li>
+                        <li>如匹配率低于80%，建议手动检查数据</li>
+                    </ul>
+                    
+                    <h4>第五步：加载数据</h4>
+                    <ul>
+                        <li>点击"📥 加载数据"按钮</li>
+                        <li>等待数据加载完成</li>
+                        <li>查看状态栏的加载结果</li>
+                    </ul>
+                    
+                    <h4>第六步：开始处理</h4>
+                    <ul>
+                        <li>点击"⚡ 开始处理"按钮</li>
+                        <li>观察进度条和状态信息</li>
+                        <li>等待处理完成</li>
+                    </ul>
+                    
+                    <h4>第七步：保存结果</h4>
+                    <ul>
+                        <li>点击"💾 保存结果"按钮</li>
+                        <li>如原文件被占用，会自动创建副本</li>
+                        <li>查看保存成功提示</li>
+                    </ul>
+                    
+                    <h4>🔧 高级功能：</h4>
+                    <ul>
+                        <li><strong>调试信息：</strong>查看详细配置和数据信息</li>
+                        <li><strong>测试保存：</strong>验证文件保存功能</li>
+                        <li><strong>手动配置：</strong>自定义列设置</li>
+                    </ul>
+                `;
+            } else if (tabName === 'faq') {
+                html = `
+                    <h3>❓ 常见问题解答</h3>
+                    
+                    <h4>Q1: 程序提示"未找到SKU"或"未找到成本"？</h4>
+                    <p><strong>A1: 可能原因：</strong></p>
+                    <ul>
+                        <li>SKU格式不一致（特殊字符、空格、大小写）</li>
+                        <li>数据源配置错误</li>
+                        <li>数据清理问题</li>
+                    </ul>
+                    <p><strong>解决方案：</strong>使用"数据检查"功能分析匹配情况</p>
+                    
+                    <h4>Q2: 保存时提示权限错误？</h4>
+                    <p><strong>A2: </strong>程序会自动创建副本文件，无需担心数据丢失<br>
+                    副本文件命名：原文件名_处理结果_时间戳.xlsx</p>
+                    
+                    <h4>Q3: 处理速度很慢？</h4>
+                    <p><strong>A3: 优化建议：</strong></p>
+                    <ul>
+                        <li>减少处理行数范围</li>
+                        <li>关闭其他占用内存的程序</li>
+                        <li>分批处理大量数据</li>
+                    </ul>
+                    
+                    <h4>Q4: 自动配置不准确？</h4>
+                    <p><strong>A4: </strong>可以手动调整：</p>
+                    <ul>
+                        <li>重新选择工作表</li>
+                        <li>修改列设置</li>
+                        <li>使用"调试信息"查看配置</li>
+                    </ul>
+                    
+                    <h4>Q5: 数据匹配率低？</h4>
+                    <p><strong>A5: 检查要点：</strong></p>
+                    <ul>
+                        <li>SKU格式是否统一</li>
+                        <li>是否有特殊字符</li>
+                        <li>数据源是否正确</li>
+                        <li>使用"数据检查"详细分析</li>
+                    </ul>
+                    
+                    <h4>Q6: 程序无法启动？</h4>
+                    <p><strong>A6: 检查项目：</strong></p>
+                    <ul>
+                        <li>Python版本 (建议3.7+)</li>
+                        <li>依赖库是否正确安装</li>
+                        <li>Excel文件格式是否正确</li>
+                    </ul>
+                    
+                    <h4>📞 技术支持：</h4>
+                    <p>如遇到其他问题，请检查：</p>
+                    <ul>
+                        <li>错误提示信息</li>
+                        <li>数据格式是否正确</li>
+                        <li>文件权限是否正常</li>
+                    </ul>
+                `;
+            }
+            
+            content.innerHTML = html;
+        }
+
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('helpModal');
+            if (event.target === modal) {
+                closeHelpModal();
+            }
+        }
+
+        // 显示数据一致性报告
+        function showConsistencyReport(result) {
+            const reportHtml = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+                    <h2>📊 数据一致性检查报告</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+                        <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #155724; margin: 0;">✅ 匹配SKU</h3>
+                            <div style="font-size: 24px; font-weight: bold; color: #155724;">${result.matched_count || 0}</div>
+                        </div>
+                        <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #721c24; margin: 0;">❌ 不匹配SKU</h3>
+                            <div style="font-size: 24px; font-weight: bold; color: #721c24;">${result.unmatched_count || 0}</div>
+                        </div>
+                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #0c5460; margin: 0;">📈 匹配率</h3>
+                            <div style="font-size: 24px; font-weight: bold; color: #0c5460;">${result.match_rate || '0%'}</div>
+                        </div>
+                    </div>
+                    
+                    ${result.unmatched_skus && result.unmatched_skus.length > 0 ? `
+                        <div style="margin: 20px 0;">
+                            <h3>🔍 不匹配的SKU列表：</h3>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">
+                                ${result.unmatched_skus.map(sku => `<div style="padding: 5px; border-bottom: 1px solid #eee;">${sku}</div>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${result.unused_cost_skus && result.unused_cost_skus.length > 0 ? `
+                        <div style="margin: 20px 0;">
+                            <h3>⚠️ 未使用的成本SKU：</h3>
+                            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff3cd;">
+                                ${result.unused_cost_skus.map(sku => `<div style="padding: 5px; border-bottom: 1px solid #eee;">${sku}</div>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="margin: 20px 0; padding: 15px; background: #e2e3e5; border-radius: 8px;">
+                        <h4>💡 建议：</h4>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            ${result.match_rate && parseFloat(result.match_rate) < 80 ? 
+                                '<li style="color: #dc3545;">⚠️ 匹配率较低，建议检查SKU格式和数据源配置</li>' : 
+                                '<li style="color: #28a745;">✅ 匹配率良好，可以继续处理</li>'
+                            }
+                            <li>确保SKU格式统一，无特殊字符</li>
+                            <li>检查数据源配置是否正确</li>
+                            <li>如匹配率低于80%，建议手动检查数据</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="closeConsistencyReport()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            关闭报告
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.id = 'consistencyModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center; overflow-y: auto;
+            `;
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 10px; max-width: 90%; max-height: 90%; overflow-y: auto;">
+                    ${reportHtml}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 点击背景关闭
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeConsistencyReport();
+                }
+            };
+        }
+
+        function closeConsistencyReport() {
+            const modal = document.getElementById('consistencyModal');
+            if (modal) {
+                modal.remove();
+            }
         }
     </script>
 </body>

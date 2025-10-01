@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 状态检查</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-item { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .loading { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; background: #007bff; color: white; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API 状态检查</h1>
+        <p>检查 Excel 处理 API 的连接状态和 CORS 配置</p>
+        
+        <div class="test-item">
+            <h3>🏥 基础连接测试</h3>
+            <button onclick="testBasicConnection()">测试基础连接</button>
+            <div id="basicResult" class="result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h3>🌐 CORS 预检测试</h3>
+            <button onclick="testCORSPreflight()">测试 CORS 预检</button>
+            <div id="corsResult" class="result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h3>📊 完整诊断</h3>
+            <button onclick="runFullDiagnosis()">运行完整诊断</button>
+            <div id="diagnosisResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://excel-processor-api.onrender.com';
+
+        async function testBasicConnection() {
+            const resultDiv = document.getElementById('basicResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 正在测试基础连接...</div>';
+            
+            try {
+                // 使用 fetch 测试基础连接
+                const response = await fetch(`${API_BASE_URL}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ 基础连接成功！<br>
+                            状态: ${result.status}<br>
+                            时间: ${result.timestamp}<br>
+                            响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ 连接失败！状态码: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 连接失败！错误: ${error.message}</div>`;
+            }
+        }
+
+        async function testCORSPreflight() {
+            const resultDiv = document.getElementById('corsResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 正在测试 CORS 预检...</div>';
+            
+            try {
+                // 测试 OPTIONS 预检请求
+                const response = await fetch(`${API_BASE_URL}/api/health`, {
+                    method: 'OPTIONS',
+                    mode: 'cors',
+                    headers: {
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Max-Age': response.headers.get('Access-Control-Max-Age')
+                };
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ CORS 预检成功！<br>
+                            状态码: ${response.status}<br>
+                            CORS 头信息:<br>
+                            ${Object.entries(corsHeaders).map(([key, value]) => 
+                                `• ${key}: ${value || '未设置'}<br>`
+                            ).join('')}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ CORS 预检失败！状态码: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ CORS 预检失败！错误: ${error.message}</div>`;
+            }
+        }
+
+        async function runFullDiagnosis() {
+            const resultDiv = document.getElementById('diagnosisResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 正在运行完整诊断...</div>';
+            
+            let results = [];
+            
+            // 测试1: 基础连接
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`, { mode: 'cors' });
+                results.push(`✅ 基础连接: ${response.status} ${response.statusText}`);
+                
+                // 检查响应头
+                const headers = response.headers;
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': headers.get('Access-Control-Allow-Headers')
+                };
+                
+                results.push(`📋 响应头检查:`);
+                Object.entries(corsHeaders).forEach(([key, value]) => {
+                    results.push(`  ${key}: ${value || '❌ 未设置'}`);
+                });
+                
+            } catch (error) {
+                results.push(`❌ 基础连接: ${error.message}`);
+            }
+            
+            // 测试2: OPTIONS 预检
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`, {
+                    method: 'OPTIONS',
+                    mode: 'cors'
+                });
+                results.push(`✅ OPTIONS 预检: ${response.status} ${response.statusText}`);
+            } catch (error) {
+                results.push(`❌ OPTIONS 预检: ${error.message}`);
+            }
+            
+            // 测试3: 尝试 POST 请求
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({test: 'data'}),
+                    mode: 'cors'
+                });
+                results.push(`✅ POST 请求: ${response.status} ${response.statusText}`);
+            } catch (error) {
+                results.push(`❌ POST 请求: ${error.message}`);
+            }
+            
+            resultDiv.innerHTML = `<div class="success">🔍 诊断完成：<br>${results.join('<br>')}</div>`;
+        }
+
+        // 页面加载时自动运行基础连接测试
+        window.onload = function() {
+            testBasicConnection();
+        };
+    </script>
+</body>
+</html>
