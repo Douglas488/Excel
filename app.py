@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
 import pandas as pd
 import openpyxl
@@ -15,7 +15,28 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
 # 启用CORS支持
-CORS(app, origins=['*'])
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
+
+# 兜底：为所有响应追加CORS头，并正确处理预检请求
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*') or '*'
+    response.headers['Vary'] = 'Origin'
+    response.headers['Access-Control-Allow-Credentials'] = 'false'
+    response.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', 'Content-Type, Authorization')
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
+
+@app.route('/<path:unused>', methods=['OPTIONS'])
+@app.route('/', methods=['OPTIONS'])
+def cors_preflight(unused=None):
+    resp = make_response('', 204)
+    resp.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*') or '*'
+    resp.headers['Vary'] = 'Origin'
+    resp.headers['Access-Control-Allow-Credentials'] = 'false'
+    resp.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', 'Content-Type, Authorization')
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return resp
 
 # 允许的文件扩展名
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
